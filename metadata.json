@@ -1,0 +1,5 @@
+{
+  "name": "YameHome Generator",
+  "description": "Générateur de reçus de réservation hors ligne pour YameHome avec support de tarification personnalisée.",
+  "requestFramePermissions": []
+}
