@@ -27,6 +27,8 @@ export interface ReceiptData {
   endDate: string;
   isCustomRate: boolean;
   customLodgingTotal: number;
+  isNegotiatedRate?: boolean;
+  negotiatedPricePerNight?: number;
   paidAmount: number;
   paymentMethod: string;
   signature: string;

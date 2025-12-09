@@ -14,6 +14,8 @@ function App() {
     endDate: '',
     isCustomRate: false,
     customLodgingTotal: 0,
+    isNegotiatedRate: false,
+    negotiatedPricePerNight: 0,
     paidAmount: 0,
     paymentMethod: 'Espèces',
     signature: '',
@@ -106,19 +108,59 @@ function App() {
           <div className="bg-gray-800 p-4 rounded border border-gray-700">
             <h3 className="text-gray-400 uppercase text-xs font-bold mb-3">Tarification</h3>
             
-            <div className="flex items-center mb-3">
-              <input type="checkbox" id="isCustomRate" name="isCustomRate" className="w-4 h-4 text-blue-600" onChange={handleChange} />
-              <label htmlFor="isCustomRate" className="ml-2 text-sm text-yellow-400 font-semibold cursor-pointer">Tarif Personnalisé / Plateforme</label>
+            {/* Option 1: Platform/Custom Total */}
+            <div className="flex items-center mb-2">
+              <input 
+                type="checkbox" 
+                id="isCustomRate" 
+                name="isCustomRate" 
+                checked={formData.isCustomRate}
+                onChange={(e) => {
+                  setFormData(prev => ({ 
+                    ...prev, 
+                    isCustomRate: e.target.checked,
+                    isNegotiatedRate: e.target.checked ? false : prev.isNegotiatedRate 
+                  }));
+                }} 
+                className="w-4 h-4 text-blue-600" 
+              />
+              <label htmlFor="isCustomRate" className="ml-2 text-sm text-yellow-400 font-semibold cursor-pointer">Tarif Plateforme (Total Global)</label>
             </div>
 
             {formData.isCustomRate && (
-              <div className="mb-3 animate-fade-in">
-                <label className="text-xs text-gray-400 block mb-1">Sous-total Séjour (Plateforme)</label>
-                <input type="number" name="customLodgingTotal" className="w-full bg-gray-700 rounded p-2 border border-yellow-600 text-yellow-300" placeholder="Ex: 150000" onChange={handleChange} />
+              <div className="mb-4 pl-6 animate-fade-in">
+                <label className="text-xs text-gray-400 block mb-1">Total Séjour (Plateforme)</label>
+                <input type="number" name="customLodgingTotal" value={formData.customLodgingTotal || ''} className="w-full bg-gray-700 rounded p-2 border border-yellow-600 text-yellow-300" placeholder="Ex: 150000" onChange={handleChange} />
               </div>
             )}
 
-            <div className="mb-3">
+            {/* Option 2: Negotiated Rate */}
+            <div className="flex items-center mb-2">
+              <input 
+                type="checkbox" 
+                id="isNegotiatedRate" 
+                name="isNegotiatedRate" 
+                checked={formData.isNegotiatedRate || false}
+                onChange={(e) => {
+                  setFormData(prev => ({ 
+                    ...prev, 
+                    isNegotiatedRate: e.target.checked,
+                    isCustomRate: e.target.checked ? false : prev.isCustomRate 
+                  }));
+                }} 
+                className="w-4 h-4 text-blue-600" 
+              />
+              <label htmlFor="isNegotiatedRate" className="ml-2 text-sm text-blue-400 font-semibold cursor-pointer">Tarif Négocié (Par nuit)</label>
+            </div>
+
+            {formData.isNegotiatedRate && (
+              <div className="mb-4 pl-6 animate-fade-in">
+                <label className="text-xs text-gray-400 block mb-1">Prix Négocié (par nuit)</label>
+                <input type="number" name="negotiatedPricePerNight" value={formData.negotiatedPricePerNight || ''} className="w-full bg-gray-700 rounded p-2 border border-blue-500 text-blue-300" placeholder="Ex: 20000" onChange={handleChange} />
+              </div>
+            )}
+
+            <div className="mb-3 mt-4 border-t border-gray-700 pt-3">
               <label className="text-xs text-gray-400 block mb-1">Montant Payé</label>
               <input type="number" name="paidAmount" className="w-full bg-gray-700 rounded p-2 border border-green-600" onChange={handleChange} />
             </div>

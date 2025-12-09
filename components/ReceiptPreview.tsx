@@ -20,13 +20,15 @@ const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ data }) => {
     const standardRate = getRateForApartment(data.apartmentName, nights);
     
     // Determine effective price and totals
-    // If custom rate, user provides the TOTAL lodging amount, not price per night.
     let totalLodging = 0;
     let effectivePricePerNight = 0;
 
     if (data.isCustomRate) {
       totalLodging = data.customLodgingTotal;
       effectivePricePerNight = totalLodging / nights;
+    } else if (data.isNegotiatedRate && data.negotiatedPricePerNight) {
+      effectivePricePerNight = data.negotiatedPricePerNight;
+      totalLodging = nights * effectivePricePerNight;
     } else {
       effectivePricePerNight = standardRate.prix;
       totalLodging = nights * effectivePricePerNight;
@@ -36,8 +38,10 @@ const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ data }) => {
     const grandTotal = totalLodging + caution;
     const remaining = grandTotal - data.paidAmount;
     
-    // Calculate discount displayed only if not custom rate and price is lower than standard
+    // Calculate discount displayed only if not custom rate (Platform) and price is lower than standard
     let reductionPercent = 0;
+    
+    // Logic: If it is a negotiated rate (or standard with logic quirk), and effective price is lower than standard
     if (!data.isCustomRate && effectivePricePerNight < standardRate.prix && standardRate.prix > 0) {
        reductionPercent = ((standardRate.prix - effectivePricePerNight) / standardRate.prix) * 100;
     }
@@ -65,16 +69,16 @@ const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ data }) => {
   if (!fin) return <div className="text-center text-gray-500 italic p-8">Veuillez remplir les détails de la réservation pour voir l'aperçu.</div>;
 
   return (
-    <div id="receipt-area" className="relative bg-white p-6 w-full max-w-[210mm] mx-auto text-gray-800 text-sm leading-relaxed shadow-lg print:shadow-none print:w-full print:p-4 print:text-xs">
+    <div id="receipt-area" className="relative bg-white p-6 w-full max-w-[210mm] mx-auto text-gray-800 text-sm leading-relaxed shadow-lg print:shadow-none print:w-full print:max-w-none print:p-6 print:text-xs print:leading-tight">
       
       {/* NO WATERMARK to improve performance */}
 
-      <div className="relative z-10 flex flex-col h-full justify-between min-h-[250mm] print:min-h-0 print:block">
+      <div className="relative z-10 flex flex-col h-full justify-between min-h-[220mm] print:min-h-0 print:block">
         
         <div>
             {/* Header Reorganized */}
-            <div className="flex flex-col items-center border-b-2 border-blue-900 pb-3 mb-4 text-center">
-              <h2 className="text-xl font-bold text-blue-900 uppercase tracking-wider mb-1">
+            <div className="flex flex-col items-center border-b-2 border-blue-900 pb-2 mb-3 print:mb-2 text-center">
+              <h2 className="text-xl font-bold text-blue-900 uppercase tracking-wider mb-1 print:text-lg">
                 YAMEHOME : REÇU DE PAIEMENT
               </h2>
               
@@ -92,9 +96,9 @@ const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ data }) => {
             </div>
 
             {/* Grid Layout for Info */}
-            <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="grid grid-cols-2 gap-4 mb-4 print:gap-3 print:mb-3">
               {/* Client Info */}
-              <div className="bg-gray-50 p-3 rounded-lg print:bg-transparent print:border print:border-gray-200">
+              <div className="bg-gray-50 p-3 rounded-lg print:bg-transparent print:border print:border-gray-200 print:p-2">
                 <h3 className="font-bold text-blue-800 border-b border-gray-300 pb-1 mb-2 uppercase text-xs">Client</h3>
                 <div className="space-y-1">
                   <p><span className="font-semibold">Nom:</span> {data.firstName} {data.lastName}</p>
@@ -104,7 +108,7 @@ const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ data }) => {
               </div>
 
               {/* Reservation Info */}
-              <div className="bg-gray-50 p-3 rounded-lg print:bg-transparent print:border print:border-gray-200">
+              <div className="bg-gray-50 p-3 rounded-lg print:bg-transparent print:border print:border-gray-200 print:p-2">
                 <h3 className="font-bold text-blue-800 border-b border-gray-300 pb-1 mb-2 uppercase text-xs">Réservation</h3>
                 <div className="space-y-1">
                   <p><span className="font-semibold">Logement:</span> {data.apartmentName}</p>
@@ -116,14 +120,28 @@ const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ data }) => {
             </div>
 
             {/* Financials Table */}
-            <div className="mb-4">
+            <div className="mb-4 print:mb-3">
               <h3 className="font-bold text-blue-800 border-b border-gray-300 pb-1 mb-2 uppercase text-xs">Détails Financiers</h3>
-              <table className="w-full text-left border-collapse text-xs sm:text-sm">
+              <table className="w-full text-left border-collapse text-xs sm:text-sm print:text-xs">
                 <tbody>
                   <tr className="border-b border-gray-100">
-                    <td className="py-1">Prix par nuit {data.isCustomRate && <span className="text-xs text-orange-600">(Tarif Plateforme/Custom)</span>}</td>
+                    <td className="py-1">
+                      Prix par nuit {data.isCustomRate && <span className="text-xs text-orange-600">(Tarif Plateforme/Custom)</span>}
+                      {data.isNegotiatedRate && <span className="text-xs text-blue-600"> (Tarif Négocié)</span>}
+                    </td>
                     <td className="py-1 text-right font-medium">{formatCurrency(fin.effectivePricePerNight)}</td>
                   </tr>
+                  
+                  {/* NEW: Reduction Row */}
+                  {fin.reductionPercent > 0 && (
+                    <tr className="border-b border-gray-100 text-green-700">
+                      <td className="py-1 pl-2 text-xs italic">Remise appliquée (-{fin.reductionPercent.toFixed(0)}%)</td>
+                      <td className="py-1 pr-2 text-right text-xs italic text-green-700">
+                        (vs Tarif Std: {formatCurrency(fin.standardPricePerNight)})
+                      </td>
+                    </tr>
+                  )}
+
                   <tr className="border-b border-gray-100">
                     <td className="py-1">Sous-total Séjour</td>
                     <td className="py-1 text-right">{formatCurrency(fin.totalLodging)}</td>
@@ -149,7 +167,7 @@ const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ data }) => {
             </div>
 
             {/* Notes & Hosts */}
-            <div className="bg-gray-50 p-3 rounded-lg mb-4 text-xs print:bg-transparent print:border print:border-gray-200">
+            <div className="bg-gray-50 p-3 rounded-lg mb-4 text-xs print:bg-transparent print:border print:border-gray-200 print:p-2 print:mb-2">
               <h3 className="font-bold text-gray-700 mb-1">Observations & Conditions</h3>
               <ul className="list-disc pl-4 space-y-0.5 text-gray-600">
                 <li>Check-in: 15h00 | Check-out: 11h30.</li>
@@ -169,18 +187,18 @@ const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ data }) => {
         </div>
 
         {/* Footer Section */}
-        <div className="mt-auto px-4 pb-4 pt-6">
+        <div className="mt-auto px-4 pb-4 pt-6 print:pt-2 print:pb-0 print:px-0 print:mt-4">
             {/* Signature Area Container - Aligned Right */}
-            <div className="flex justify-end items-end gap-4 mb-4">
+            <div className="flex justify-end items-end gap-4 mb-4 print:mb-2">
                 {/* The Logo requested next to signature */}
-                 <img src={LOGO_BASE64} alt="Logo" className="h-14 opacity-80" />
+                 <img src={LOGO_BASE64} alt="Logo" className="h-14 opacity-80 print:h-10" />
 
                  {/* Signature Block */}
-                 <div className="text-center w-48">
+                 <div className="text-center w-48 print:w-40">
                       {/* Dynamic Signature Name */}
-                      <div className="h-12 flex items-end justify-center mb-1">
+                      <div className="h-12 flex items-end justify-center mb-1 print:h-8">
                           {data.signature ? (
-                              <p className="font-serif italic text-xl text-blue-900 font-bold whitespace-nowrap">{data.signature}</p>
+                              <p className="font-serif italic text-xl text-blue-900 font-bold whitespace-nowrap print:text-lg">{data.signature}</p>
                           ) : (
                               <span className="opacity-0">.</span>
                           )}
@@ -192,7 +210,7 @@ const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ data }) => {
                  </div>
             </div>
 
-            {/* Bottom Centered Text (Restored position) */}
+            {/* Bottom Centered Text */}
             <div className="text-center">
                 <p className="text-[10px] text-gray-400 italic">Merci pour votre confiance !</p>
                 <div className="text-[8px] text-gray-300 print:hidden mt-1">
