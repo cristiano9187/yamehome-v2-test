@@ -59,6 +59,16 @@ export const TARIFS: TarifMap = {
       '1-6': { prix: 40000, caution: 10000 }, 
       '7-29': { prix: 34000, caution: 15000 }, 
       '30+': { prix: 30000, caution: 30000 }
+  },
+  'GALLAGHERS CITY - CHAMBRE STANDARD + CUISINE': { 
+      address: 'Lieu-dit Troisième Mi-temps. Bangangté',
+      '1-6': { prix: 15000, caution: 10000 }, 
+      '7+': { prix: 12000, caution: 15000 }
+  },
+  'GALLAGHERS CITY - CHAMBRE STANDARD SIMPLE': { 
+      address: 'Lieu-dit Troisième Mi-temps. Bangangté',
+      '1-6': { prix: 12000, caution: 10000 }, 
+      '7+': { prix: 10000, caution: 15000 }
   }
 };
 
