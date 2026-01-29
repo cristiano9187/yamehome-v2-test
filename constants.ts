@@ -81,7 +81,7 @@ export const HOSTS = [
   { id: "pierre", label: "Pierre (+237 670 87 11 39)" },
   { id: "regine", label: "Regine (+237 692 79 22 26)" }
 ];
-
+/*
 export const getRateForApartment = (apartmentName: string, nights: number): { prix: number, caution: number, address: string } => {
   const apt = TARIFS[apartmentName];
   if (!apt) return { prix: 0, caution: 0, address: '' };
@@ -107,6 +107,50 @@ export const getRateForApartment = (apartmentName: string, nights: number): { pr
   if (!rule) rule = { prix: 0, caution: 0 };
 
   return { prix: rule.prix, caution: rule.caution, address: apt.address };
+};
+*/
+export const getRateForApartment = (apartmentName: string, nights: number): { prix: number; caution: number; address: string } => {
+  const apartmentRules = TARIFS[apartmentName];
+
+  if (!apartmentRules) {
+    return { prix: 0, caution: 0, address: 'Adresse non trouvée' };
+  }
+
+  // On récupère les clés des tranches de prix (ex: '1-6', '7+', '1-2', '3+')
+  const rateKeys = Object.keys(apartmentRules).filter(k => k !== 'address');
+
+  let bestMatchKey: string | undefined;
+
+  for (const key of rateKeys) {
+    if (key.includes('+')) {
+      const minNights = parseInt(key.replace('+', ''), 10);
+      if (nights >= minNights) {
+        bestMatchKey = key;
+        // On ne s'arrête pas, on continue pour trouver la tranche la plus spécifique
+        // (ex: si on a '7+' et '30+', et nights=35, il faut prendre '30+')
+      }
+    } else if (key.includes('-')) {
+      const [min, max] = key.split('-').map(n => parseInt(n, 10));
+      if (nights >= min && nights <= max) {
+        bestMatchKey = key;
+        break; // Une tranche min-max est un match exact, on peut s'arrêter
+      }
+    }
+  }
+
+  if (bestMatchKey) {
+    const rate = apartmentRules[bestMatchKey as keyof typeof apartmentRules];
+    if (typeof rate === 'object' && 'prix' in rate && 'caution' in rate) {
+      return {
+        prix: rate.prix,
+        caution: rate.caution,
+        address: apartmentRules.address,
+      };
+    }
+  }
+  
+  // Si aucune règle n'a été trouvée
+  return { prix: 0, caution: 0, address: apartmentRules.address };
 };
 
 export const formatCurrency = (amount: number) => {
