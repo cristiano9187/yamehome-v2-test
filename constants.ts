@@ -77,7 +77,9 @@ export const PAYMENT_METHODS = ["Espèces", "Paiement mobile", "Virement bancair
 export const HOSTS = [
   { id: "paola", label: "Paola (+237 691 47 24 82)" },
   { id: "edwige", label: "Edwige (+237 656 75 13 10)" },
-  { id: "idriss", label: "Idriss (+237 651 16 37 50)" }
+  { id: "idriss", label: "Idriss (+237 651 16 37 50)" },
+  { id: "pierre", label: "Pierre (+237 670 87 11 39)" },
+  { id: "regine", label: "Regine (+237 692 79 22 26)" }
 ];
 
 export const getRateForApartment = (apartmentName: string, nights: number): { prix: number, caution: number, address: string } => {
